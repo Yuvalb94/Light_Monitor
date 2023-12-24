@@ -5,7 +5,7 @@ import time
 import yaml 
 from zoneinfo import ZoneInfo
 from argparse import ArgumentParser
-
+import numpy as np
 import serial
 import serial.tools.list_ports
 import pandas as pd
@@ -30,8 +30,7 @@ POSSIBLE_DEVICE_PATHS = [
 
 CSV_FIELD_NAMES = ['sensorValue', 'dateTime']
 FILE_WRITE_DELAY_HRS = 1
-# FILE_WRITE_DELAY_MINS = FILE_WRITE_DELAY_HRS * 60 # How many minutes we wait between each file dump
-FILE_WRITE_DELAY_MINS = 2
+FILE_WRITE_DELAY_MINS = FILE_WRITE_DELAY_HRS * 60 # How many minutes we wait between each file dump
 TIMEZONE_NAME = "Asia/Jerusalem"
 
 
@@ -145,56 +144,60 @@ if __name__ == "__main__":
         # print(f"test = {(datetime.datetime.now() - minute_loop_start_time).seconds}")
     #     counter += 1
 
-    ## Part 2 - This is the main part of the code, which runs in a loop and reads data from
-    ## sensors, and controls the light switch.
+    ## Part 2 - This is the main part of the code, which runs in a loop and reads data from light
+    ## sensor, and saves the daily light data to a csv file.
     
-    data_from_last_hour = [] # This array will handle the hourly data, and will be reset once an hour is over
-
+    data_from_last_day = [] # This array will handle the hourly data, and will be reset once an hour is over
+    minute_counter = 1
     hour_loop_start_time = datetime.datetime.now()
     while True: 
         while serial_device.in_waiting == 0: 
             pass 
         
-
-        # Part 5.2 - Read & aggregate data from the sensor
+        # Read & aggregate data from the sensor
         current_time = datetime.datetime.now()
         print(f"Current UTC time is {current_time}\n")
-
         
+        data_from_last_minute = [] # This array will handle data in each minute. It resets every minute. 
 
-        hour_loop_start_time = datetime.datetime.now()
+        minute_loop_start_time = datetime.datetime.now()
 
-        # This loop should run for 1 minute, with a 1 second rest in between.
+        # This loop should run for 1 minute.
         # Every second we get new data from the arduino, and store in an array.
-
+        # in the end, it calculates the average light value for the last minute, and adds the current date and time.
+        
+        
         while True:
-            data = get_arduino_data(serial_device)
+            data = get_arduino_data(serial_device) #returns data array ['date', 'time', 'sensorValue']
             if data is None: # There was an error, moving on and ignoring this specific read
                 continue
             print(f"data: {data} \n")
-            data_from_last_hour.append(data)
-            if (datetime.datetime.now() - hour_loop_start_time).seconds >= 60:
-                print("\t\tFinished collecting data for 1 minute")
+            data_from_last_minute.append(data[2]) #append only light sensor value from current data array
+            if (datetime.datetime.now() - minute_loop_start_time).seconds >= 59:
+                one_minute_data = [data[0], data[1], np.round(np.mean(data_from_last_minute), 0)]
+                print(f"\t\tFinished collecting data for {minute_counter} minutes, average value is: {one_minute_data}")
+                minute_counter = minute_counter + 1
                 break
-            time.sleep(1) #wait 60 seconds between each data aqcuisition from arduino
+            time.sleep(1) #wait 1 seconds between each data aqcuisition from arduino. THIS DELAY HAS TO MATCH THE SAMPLING RATE OF THE ARDUINO!!!
         
-        minutes_since_start = (datetime.datetime.now() - hour_loop_start_time).seconds / 60 #calculate time passed since start in minutes
-        if minutes_since_start >= FILE_WRITE_DELAY_MINS:
-            print(f"\t{FILE_WRITE_DELAY_MINS} minutes have passed! Writing data to disk")
+        data_from_last_day.append(one_minute_data)
 
+        minutes_since_start = (datetime.datetime.now() - hour_loop_start_time).seconds / 60 #calculate time passed since start in minutes
+        if minutes_since_start >= FILE_WRITE_DELAY_MINS: #if 1 hour passed since the start of data acquisition, export aggregated data to csv file.
+            print(f"\t{FILE_WRITE_DELAY_HRS} hours have passed! Writing data to disk")
+            minute_counter = 1
             curr_time = datetime.datetime.now().strftime("%Y%m%d_%H_%M")
-            
-                        
+                
             output_path = r'/Users/cohenlab/Desktop/light_monitor_project/light_data'
             filename = os.path.join(output_path, rf'{curr_time}.csv')
             print("filename = ", filename)
-            hourly_data_df = pd.DataFrame(data_from_last_hour)
+            hourly_data_df = pd.DataFrame(data_from_last_day)
             hourly_data_df.columns = ['date', 'Time', 'sensorValue']
             hourly_data_df.to_csv(filename)
 
             print(f"\tSuccessfully wrote  data to {output_path}")
             
-            # Reset the hour loop start time, the hourly data array, and then continue the loop.
+            # Reset the loop start time, the hourly data array, and then continue the loop.
             hour_loop_start_time = datetime.datetime.now()
-            data_from_last_hour = [] 
+            data_from_last_day = [] 
    
