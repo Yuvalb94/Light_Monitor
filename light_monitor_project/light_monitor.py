@@ -29,7 +29,7 @@ POSSIBLE_DEVICE_PATHS = [
 
 
 CSV_FIELD_NAMES = ['sensorValue', 'dateTime']
-FILE_WRITE_DELAY_HRS = 1
+FILE_WRITE_DELAY_HRS = 24
 FILE_WRITE_DELAY_MINS = FILE_WRITE_DELAY_HRS * 60 # How many minutes we wait between each file dump
 TIMEZONE_NAME = "Asia/Jerusalem"
 
@@ -102,10 +102,7 @@ def get_arduino_data(serial_device):
         print(f"Failed reading data from Arduino! {err}")
         return None
 
-    print(f"time: {formatted_time}, arduino raw data: {arduino_raw_data}")
     data_packet = parse_arduino_data(arduino_raw_data)
-    print(f"data_packet = {data_packet}")
-
 
     # Verify that the data was read properly. 
     # If our data dict has less than the expected CSV field name count (minus 1 for the datetime field
@@ -134,15 +131,6 @@ if __name__ == "__main__":
         sys.exit(1)
     
     
-    # counter = 0
-    # minute_loop_start_time = datetime.datetime.now()
-    # while counter < 30:
-    #     data = get_arduino_data(serial_device)
-    #     print(f"data: {data} \n")
-        # print(f"datetime.datetime.now() = {datetime.datetime.now()}")
-        # print(f"datetime.datetime.now().second = {datetime.datetime.now().second}")
-        # print(f"test = {(datetime.datetime.now() - minute_loop_start_time).seconds}")
-    #     counter += 1
 
     ## Part 2 - This is the main part of the code, which runs in a loop and reads data from light
     ## sensor, and saves the daily light data to a csv file.
@@ -150,6 +138,8 @@ if __name__ == "__main__":
     data_from_last_day = [] # This array will handle the hourly data, and will be reset once an hour is over
     minute_counter = 1
     hour_loop_start_time = datetime.datetime.now()
+
+
     while True: 
         while serial_device.in_waiting == 0: 
             pass 
@@ -175,29 +165,36 @@ if __name__ == "__main__":
             data_from_last_minute.append(data[2]) #append only light sensor value from current data array
             if (datetime.datetime.now() - minute_loop_start_time).seconds >= 59:
                 one_minute_data = [data[0], data[1], np.round(np.mean(data_from_last_minute), 0)]
-                print(f"\t\tFinished collecting data for {minute_counter} minutes, average value is: {one_minute_data}")
+                print(f"\tFinished collecting data for {minute_counter} minutes, data for last minute is: {one_minute_data}")
                 minute_counter = minute_counter + 1
                 break
             time.sleep(1) #wait 1 seconds between each data aqcuisition from arduino. THIS DELAY HAS TO MATCH THE SAMPLING RATE OF THE ARDUINO!!!
         
         data_from_last_day.append(one_minute_data)
-
+ 
         minutes_since_start = (datetime.datetime.now() - hour_loop_start_time).seconds / 60 #calculate time passed since start in minutes
-        if minutes_since_start >= FILE_WRITE_DELAY_MINS: #if 1 hour passed since the start of data acquisition, export aggregated data to csv file.
+        if minutes_since_start >= FILE_WRITE_DELAY_MINS: #if {FILE_WRITE_DELAY_HRS} hours passed since the start of data acquisition, export aggregated data to csv file.
             print(f"\t{FILE_WRITE_DELAY_HRS} hours have passed! Writing data to disk")
-            minute_counter = 1
-            curr_time = datetime.datetime.now().strftime("%Y%m%d_%H_%M")
-                
-            output_path = r'/Users/cohenlab/Desktop/light_monitor_project/light_data'
+            
+            # this part will create a directory for every month and save the daily data files in it, or save the daily data file in the current month directory if it already exists 
+
+            curr_time = datetime.datetime.now().strftime("%H_%M")  #current time (H:M)         
+            date_today = datetime.datetime.now().strftime("%Y_%m_%d") # current date
+            base_path = r'/Users/cohenlab/Desktop/light_monitor_project/light_data'  
+            output_path = os.path.join(base_path, date_today)        
+            os.makedirs(output_path, exist_ok = True)
+
             filename = os.path.join(output_path, rf'{curr_time}.csv')
-            print("filename = ", filename)
+
             hourly_data_df = pd.DataFrame(data_from_last_day)
             hourly_data_df.columns = ['date', 'Time', 'sensorValue']
             hourly_data_df.to_csv(filename)
 
             print(f"\tSuccessfully wrote  data to {output_path}")
             
-            # Reset the loop start time, the hourly data array, and then continue the loop.
+            # Reset the loop start time, the daily data array, the minutes counter and then continue the loop.
             hour_loop_start_time = datetime.datetime.now()
             data_from_last_day = [] 
+            minute_counter = 1
+
    
