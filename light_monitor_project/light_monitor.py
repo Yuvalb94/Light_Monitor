@@ -32,7 +32,7 @@ CSV_FIELD_NAMES = ['sensorValue', 'dateTime']
 FILE_WRITE_DELAY_HRS = 24
 FILE_WRITE_DELAY_MINS = FILE_WRITE_DELAY_HRS * 60 # How many minutes we wait between each file dump
 TIMEZONE_NAME = "Asia/Jerusalem"
-
+print(f"minutes between each file dump: {FILE_WRITE_DELAY_MINS}")
 
 def get_serial_device():
     """
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     ## Part 2 - This is the main part of the code, which runs in a loop and reads data from light
     ## sensor, and saves the daily light data to a csv file.
     
-    data_from_last_day = [] # This array will handle the hourly data, and will be reset once an hour is over
+    data_from_last_day = [] # This array will handle the daily data, and will be reset once the day is over
     minute_counter = 1
     hour_loop_start_time = datetime.datetime.now()
 
@@ -172,7 +172,8 @@ if __name__ == "__main__":
         
         data_from_last_day.append(one_minute_data)
  
-        minutes_since_start = (datetime.datetime.now() - hour_loop_start_time).seconds / 60 #calculate time passed since start in minutes
+        minutes_since_start = (datetime.datetime.now() - hour_loop_start_time).total_seconds() / 60 #calculate time passed since start in minutes
+
         if minutes_since_start >= FILE_WRITE_DELAY_MINS: #if {FILE_WRITE_DELAY_HRS} hours passed since the start of data acquisition, export aggregated data to csv file.
             print(f"\t{FILE_WRITE_DELAY_HRS} hours have passed! Writing data to disk")
             
@@ -180,7 +181,7 @@ if __name__ == "__main__":
 
             curr_time = datetime.datetime.now().strftime("%H_%M")  #current time (H:M)         
             date_today = datetime.datetime.now().strftime("%Y_%m_%d") # current date
-            base_path = r'/Users/cohenlab/Desktop/light_monitor_project/light_data'  
+            base_path = r'/home/cohenlab/Desktop/light_monitor_project/Light_data'  
             output_path = os.path.join(base_path, date_today)        
             os.makedirs(output_path, exist_ok = True)
 
