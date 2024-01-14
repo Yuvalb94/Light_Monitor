@@ -103,20 +103,23 @@ if __name__ == "__main__":
     # light_data = pd.read_csv(fr"{path_to_light_data}/03_01_24.csv", index_col=0)
     light_data = accumulate_data(path_to_light_data, write=False)
     # get daylight hours from our data
-    # temp = pd.read_csv(r'/Users/cohenlab/Desktop/light_monitor_project/light_data/test1')
-    light_status = pd.DataFrame(columns = ['date', 'light_on', 'light_off', 'delta'])
-    Light_status_dates = light_status['date'] = np.unique(light_data['date'])
+    light_status = pd.DataFrame(columns = ['date', 'light_on', 'light_off'])
+    Light_status_dates = light_status['date'] = np.unique(light_data['date']) #dates of light sensor reading data in string. for later use.
 
     light_status['light_on'][0] = np.nan #in this case first day has no recording from before 8am so no light on hour. initiate with NaN
-    prev = light_data.sensorValue[0]
+
+    prev = light_data.sensorValue[0] # initiate prev as the value of the first sensorValue read
+    #iterate through all sensorValue reads and compare them to the value of the previous reading.
+    #   - if the current reading is bigger than the previous one, and the previous value was 0, this is the time the light turned on.
+    #   - if the current reading is smaller than the previous one, and it is 0, this is the time the light switched off.
+    #   switch on / off times for each day will be stashed in the according column in light_status Dataframe.
     for i,val in enumerate(light_data.sensorValue):
         if prev < val and prev == 0:
             light_status['light_on'][light_status['date']==light_data['date'][i]] = light_data['Time'][i]
         if prev > val and val == 0:
             light_status['light_off'][light_status['date']==light_data['date'][i]] = light_data['Time'][i]
         prev = val
-    print("light_status:", light_status)
-    print(np.unique(light_data['sensorValue']))
+
     light_status['date'] = pd.to_datetime(light_status['date'], format="%Y_%m_%d")
     light_status['light_on'] = pd.to_datetime(light_status['light_on'], format="%H_%M_%S")
     light_status['light_off'] = pd.to_datetime(light_status['light_off'], format="%H_%M_%S")
@@ -124,22 +127,31 @@ if __name__ == "__main__":
     light_off_times = [time_to_decimal_hours(time) for time in light_status['light_off'].tolist()]
     light_delta = (np.array(light_off_times) - np.array(light_on_times))
     
+    # create a datetime vector of dates we wish to compare out data to - this array will begin in start_date and end in end_date.
     start_date = pd.to_datetime(light_status['date'], format="H_%M_%S")[0] + datetime.timedelta(days=7)
     end_date = light_status.date.iloc[-1] + datetime.timedelta(days=7)
-    dates = generate_dates(start_date, end_date)
+    dates = generate_dates(start_date, end_date) #generate the dates array
+    
+    # calculate sunrise([0]) and sunset([1]) times for location_info for every day in dates
     sunrise_times = [get_sun_times_by_day(location_info2, date)[0] for date in dates]
     sunset_times = [get_sun_times_by_day(location_info2, date)[1] for date in dates]
-    sunrise_times = [time_to_decimal_hours(time) for time in sunrise_times]
+
+    #transform datetime object to scalable decimal hour(float object) before plotting
+    sunrise_times = [time_to_decimal_hours(time) for time in sunrise_times] 
     sunset_times = [time_to_decimal_hours(time) for time in sunset_times]
+
+    #calculate the delta between sunrise and senset in the defined location for each day (float object)
     sun_delta = (np.array(sunset_times) - np.array(sunrise_times)).tolist()
     
+    #plotting the data
     plt.figure()
     plt.plot(dates, sun_delta, marker='.', linestyle='-', color='b', label='Sun_delta')
     plt.plot(dates, light_delta, marker='.', linestyle='-', color='g', label='Light_delta')
-    plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.yticks(ticks=np.linspace(13, 15, 21))
+    plt.yticks(ticks=np.linspace(13, 15, 21)) # set y axis perimeter to focus on the current delta values
+
+    #add text with value next to each mark from sun_delta and light_delta.
     for i in range(len(sun_delta)):
         plt.text(dates[i], sun_delta[i]+0.1, str(np.round(sun_delta[i], 2)), va='top', ha='center', c='b')
         plt.text(dates[i], light_delta[i]-0.1, str(np.round(light_delta[i], 2)), va='bottom', ha='center', c='g')
@@ -147,6 +159,7 @@ if __name__ == "__main__":
     plt.text(dates[4], 13.4, "Bird Room dates:", c='g', va='top', ha='right', fontsize = 'medium')
     plt.text(dates[4], 14.9, "7 days forward shift", c='k', va='top', ha='right', fontsize = 'large')
 
+    plt.legend()
     plt.xlabel('Anti-Weizmann dates')
     plt.ylabel('Time Delta (hours)')
     plt.title('Time deltas between sunrise and sunset in Anti-Weizmann vs. light on and light off in Birds room')
