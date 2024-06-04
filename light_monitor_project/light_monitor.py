@@ -178,20 +178,22 @@ if __name__ == "__main__":
             print(f"\t{FILE_WRITE_DELAY_HRS} hours have passed! Writing data to disk")
             
             # this part will create a directory for every month and save the daily data files in it, or save the daily data file in the current month directory if it already exists 
-
+            
             curr_time = datetime.datetime.now().strftime("%H_%M")  #current time (H:M)         
             date_today = datetime.datetime.now().strftime("%Y_%m_%d") # current date
             base_path = r'/home/cohenlab/Desktop/light_monitor_project/Light_data'  
-            output_path = os.path.join(base_path, date_today)        
-            os.makedirs(output_path, exist_ok = True)
+            #output_path = os.path.join(base_path, date_today)        
+            filename = os.path.join(base_path, rf'{date_today}.csv')        
 
-            filename = os.path.join(output_path, rf'{curr_time}.csv')
+            #os.makedirs(output_path, exist_ok = True)
+
+            #filename = os.path.join(output_path, rf'{curr_time}.csv')
 
             hourly_data_df = pd.DataFrame(data_from_last_day)
             hourly_data_df.columns = ['date', 'Time', 'sensorValue']
-            hourly_data_df.to_csv(filename)
+            hourly_data_df.to_csv(filename, index=False)
 
-            print(f"\tSuccessfully wrote  data to {output_path}")
+            print(f"\tSuccessfully wrote  data to {base_path}")
             
             # Reset the loop start time, the daily data array, the minutes counter and then continue the loop.
             hour_loop_start_time = datetime.datetime.now()
