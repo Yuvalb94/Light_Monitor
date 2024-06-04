@@ -12,7 +12,7 @@ void loop() {
  int ldrStatus = analogRead(ldrPin);   //read the status of the LDR value
  
 Serial.println(ldrStatus);
-delay(sampelRate); // sample rate, of 1 sample every 100ms
+delay(sampelRate); // sample rate, of 1 sample every 1000ms
 
 
 
