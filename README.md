@@ -81,6 +81,7 @@ Note that the last command in the code block below is the installation of the sa
 * Connect an Arduino microcontroller to the Raspberry Pi and open the [arduino_code_L.ino](https://github.com/Yuvalb94/NeuralSyntaxLab_Yuval_LightMonitor/blob/main/arduino_code_L/arduino_code_L.ino) file using the Arduino IDE. 
 * load arduino_code.ino code onto the Arduino using the IDE. (see instructions [here](https://docs.arduino.cc/learn/starting-guide/the-arduino-software-ide).
 
+  
 ### mounting storWis onto Raspberry Pi.
 storWis is used to back up all the files whic
 In terminal typeh contain the environment monitoring data.
@@ -118,7 +119,7 @@ sudo umount /mnt/path/to/mount/point (/mnt/STORWIS)
 ```
 
 ## How to automatically run the script when Raspberry Pi is turned on
-The script 'light_monitor' is out main script and it should be launched automatically when Raspberry Pi is turned on.
+The script 'light_monitor.py' is out main script and it should be launched automatically when Raspberry Pi is turned on.
 
 This is done using the following tools - 
 1. We have a bash script, called `startup_script.sh` which is an infinite loop that keep relaunching the script and waits for it to finish. If it crashes, it's supposed to run again.
@@ -133,7 +134,8 @@ To automatically run the script when the machine turns on -
 `@lxterminal -e /path/to/startup_script.sh`
   save and exit terminal.
 4. create a folder called light_data that will store the data written by the main script.
-5. Reboot the machine to verify that it's working
+5. In the script light_monitor.py, make sure that the base path is the path to the folder you created in the previous step.
+6. Reboot the machine to verify that it's working
 
 
 
