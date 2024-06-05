@@ -2,9 +2,6 @@ import datetime
 import sys
 import os
 import time
-import yaml 
-from zoneinfo import ZoneInfo
-from argparse import ArgumentParser
 import numpy as np
 import serial
 import serial.tools.list_ports
