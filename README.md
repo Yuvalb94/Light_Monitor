@@ -66,15 +66,15 @@ Note that the last command in the code block below is the installation of the sa
 * Download the [light_monitor](https://github.com/NeuralSyntaxLab/acoustic_chamber_environment_control/tree/main)  repository as by clicking on `Code > Download zip.` extract the zip file onto the dashboard.
   now you should have a folder by the same name containing all the repository content.
 
-* Install all Python dependencies (by running `pip install -r path/to/requirements.txt`). 
-* Install Arduino IDE: In terminal type `sudo apt-get install Arduino`.
-* Install visual studio code: In terminal type `sudo apt-get install code`.
-* Install all Arduino dependencies: Download the libraries from github as a .zip file.  
-    In Arduino IDE go to `Sketch > Include Library > Add .ZIP Library` and choose the library file 
+* Install neccesary Python dependencies on the Raspberry pi:
+  ```
+  pip install pandas
 
-  Scale library can be downloaded from [here](https://github.com/sparkfun/SparkFun_Qwiic_Scale_NAU7802_Arduino_Library)  
-  Temperature and humidity sensor library can be downloaded from [here](https://github.com/CainZ/DHT)  
+  sudo apt install libopenblas-dev
 
-* Connect an Arduino microcontroller to the Raspberry Pi and open the [arduino_code.ino](https://github.com/NeuralSyntaxLab/acoustic_chamber_environment_control/blob/main/arduino_code/arduino_code.ino) file using the Arduino IDE. 
+  ```
+* Install Arduino IDE: In terminal type `sudo apt-get install arduino`. This could take a few minutes.
+
+* Connect an Arduino microcontroller to the Raspberry Pi and open the [arduino_code_L.ino](https://github.com/Yuvalb94/NeuralSyntaxLab_Yuval_LightMonitor/blob/main/arduino_code_L/arduino_code_L.ino) file using the Arduino IDE. 
 * load arduino_code.ino code onto the Arduino using the IDE. (see instructions [here](https://docs.arduino.cc/learn/starting-guide/the-arduino-software-ide).
 
