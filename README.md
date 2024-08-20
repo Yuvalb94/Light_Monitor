@@ -5,5 +5,7 @@ The setup contains a light-dependant-resistor (LDR), an Arduino microcontroller 
 
 The [startup script](https://github.com/Yuvalb94/NeuralSyntaxLab_Yuval_LightMonitor/blob/d589808785becd07bf68272145cf4240f085d43c/startup_script.sh) is a shell script designed to command the minicomputer to run the main control script at startup, making it easy to use the system without the need to operate it as it runs.
 
+The [arduino code](https://github.com/Yuvalb94/NeuralSyntaxLab_Yuval_LightMonitor/blob/aee685603db5f31ef52bc17c9c4922901a49422b/arduino_code_L/arduino_code_L.ino) is a code that we load on the arduino as we prepare the system for operation. Then the Arduino microcontroller, which is connected to both the LDR and the minicomputer, automatically knows to collect the data and transfer it to the main control script that runs on the minicomputer.
+
 
 
